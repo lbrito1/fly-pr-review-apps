@@ -43,6 +43,7 @@ if ! flyctl status --app "$app"; then
   echo "fly launch before PATH=$PATH"
   export PATH=/opt/hostedtoolcache/Ruby/3.2.2/x64/bin:/opt/hostedtoolcache/node/18.19.0/x64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
   echo "fly launch after PATH=$PATH"
+  go run -e -exec="package main; import \"fmt\"; import \"os\"; func main() { fmt.Println(os.Getenv(\"go PATH\")) }"
   flyctl launch --no-deploy --copy-config --name "$app" --image "$image" --region "$region" --org "$org"
   # Restore the original config file
   cp "$config.bak" "$config"
