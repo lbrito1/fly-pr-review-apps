@@ -2,8 +2,6 @@
 
 set -ex
 
-apk add expect
-
 if [ -n "$INPUT_PATH" ]; then
   # Allow user to change directories in which to run Fly commands.
   cd "$INPUT_PATH" || exit
@@ -27,6 +25,7 @@ org="${INPUT_ORG:-${FLY_ORG:-personal}}"
 image="$INPUT_IMAGE"
 config="${INPUT_CONFIG:-fly.toml}"
 dockerfile="{$INPUT_DOCKERFILE:./Dockerfile}"
+postgres_app="${INPUT_POSTGRES:-pr-$PR_NUMBER-$GITHUB_REPOSITORY_OWNER-$GITHUB_REPOSITORY_NAME-db}"
 
 if ! echo "$app" | grep "$PR_NUMBER"; then
   echo "For safety, this action requires the app's name to contain the PR number."
@@ -34,14 +33,9 @@ if ! echo "$app" | grep "$PR_NUMBER"; then
 fi
 
 teardown() {
-  # Detach app from postgres cluster and database
-  expect -c "
-    spawn flyctl postgres detach \"$INPUT_POSTGRES\" --app \"$app\"
-    expect {Select the attachment that you would like to detach*}
-    send -- \"\r\"
-    expect eof
-  "
-
+  if [ -n "$postgres_app" ]; then
+    flyctl apps destroy "$postgres_app" -y || true
+  fi
   flyctl apps destroy "$app" -y || true
 }
 
@@ -59,13 +53,13 @@ setup() {
   fi
 
   # Attach postgres cluster to the app if specified.
-  if [ -n "$INPUT_POSTGRES" ]; then
+  if [ -n "$postgres_app" ]; then
     # Create postgres app if it does not already exist
-    if ! flyctl status --app "$INPUT_POSTGRES"; then
-      flyctl postgres create --name "$INPUT_POSTGRES" --region "$region" --org "$org" --vm-size shared-cpu-1x --volume-size 1 --initial-cluster-size 1 || true
+    if ! flyctl status --app "$postgres_app"; then
+      flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size shared-cpu-1x --volume-size 1 --initial-cluster-size 1 || true
     fi
 
-    flyctl postgres attach "$INPUT_POSTGRES" --app "$app" || true
+    flyctl postgres attach "$postgres_app" --app "$app" || true
   fi
 
   # Trigger the deploy of the new version.
