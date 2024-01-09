@@ -46,7 +46,7 @@ if ! flyctl status --app "$app"; then
   export PATH=/opt/hostedtoolcache/Ruby/3.2.2/x64/bin:/opt/hostedtoolcache/node/18.19.0/x64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
   echo "fly launch after PATH=$PATH"
   echo 'package main; import ("fmt"; "os/exec"); func main() { cmd := exec.Command("ls", "/opt/hostedtoolcache/Ruby/3.2.2/x64/bin"); out, err := cmd.CombinedOutput(); if err != nil { fmt.Printf("Error executing ls: %s\\n", err) } else { fmt.Printf("/opt/hostedtoolcache/Ruby/3.2.2/x64/bin contents:\\n%s\\n", out) } path, err := exec.LookPath("bundle"); if err != nil { fmt.Printf("Bundle not found: %s\\n", err) } else { fmt.Printf("Bundle found at: %s\\n", path) } }' > temp.go && go run temp.go && rm temp.go
-  flyctl launch --no-deploy --copy-config --name "$app" --image "$image" --region "$region" --org "$org" --dockerfile ./Dockerfile
+  flyctl launch --no-deploy --copy-config --name "$app" --image "$image" --region "$region" --org "$org"
   # Restore the original config file
   cp "$config.bak" "$config"
 fi
