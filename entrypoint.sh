@@ -14,6 +14,7 @@ if [ -z "$PR_NUMBER" ]; then
 fi
 
 GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}
+
 EVENT_TYPE=$(jq -r .action /github/workflow/event.json)
 
 # Default the Fly app name to pr-{number}-{repo_owner}-{repo_name}
@@ -56,10 +57,15 @@ setup() {
   if [ -n "$postgres_app" ]; then
     # Create postgres app if it does not already exist
     if ! flyctl status --app "$postgres_app"; then
-      flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --vm-size shared-cpu-1x --volume-size 1 --initial-cluster-size 1 || true
+      # We need a 4x machine to do the fork
+      flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --fork-from frdm-db-staging --vm-size shared-cpu-4x --volume-size 10 --initial-cluster-size 1 || true
+
+      # Once it is created, we can scale back to a smaller machine
+      machine_id=$(fly machine ls -a "$postgres_app" -j | jq -r '.[0].id')
+      fly machine update $machine_id --vm-memory 256 --vm-cpus 1 -a "$postgres_app" -y
     fi
 
-    flyctl postgres attach "$postgres_app" --app "$app" || true
+    flyctl postgres attach "$postgres_app" --app "$app" --database-name frdm_staging -y || true
   fi
 
   # Trigger the deploy of the new version.
