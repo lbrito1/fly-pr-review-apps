@@ -7,7 +7,7 @@ if [ -n "$INPUT_PATH" ]; then
   cd "$INPUT_PATH" || exit
 fi
 
-PR_NUMBER=$(jq -r .number /github/workflow/event.json)
+PR_NUMBER=1
 if [ -z "$PR_NUMBER" ]; then
   echo "This action only supports pull_request actions."
   exit 1
@@ -15,7 +15,7 @@ fi
 
 GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}
 
-EVENT_TYPE=$(jq -r .action /github/workflow/event.json)
+EVENT_TYPE="open"
 
 # Default the Fly app name to pr-{number}-{repo_owner}-{repo_name}
 app="${INPUT_NAME:-pr-$PR_NUMBER-$GITHUB_REPOSITORY_OWNER-$GITHUB_REPOSITORY_NAME}"
