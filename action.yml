@@ -22,6 +22,8 @@ inputs:
     description: path to a directory containing a fly.toml to clone
   postgres:
     description: Optionally attach the app to a pre-existing Postgres cluster on Fly
+  postgres_source_app:
+    description: Source postgres app name from which the fork will be made from
   secrets:
     description: Secrets to be set on the app. Separate multiple secrets with a space
   vmsize:

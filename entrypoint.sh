@@ -27,6 +27,7 @@ image="$INPUT_IMAGE"
 config="${INPUT_CONFIG:-fly.toml}"
 dockerfile="{$INPUT_DOCKERFILE:./Dockerfile}"
 postgres_app="${INPUT_POSTGRES:-pr-$PR_NUMBER-$GITHUB_REPOSITORY_OWNER-$GITHUB_REPOSITORY_NAME-db}"
+postgres_source_app="$INPUT_POSTGRES_SOURCE_APP"
 
 if ! echo "$app" | grep "$PR_NUMBER"; then
   echo "For safety, this action requires the app's name to contain the PR number."
@@ -58,7 +59,7 @@ setup() {
     # Create postgres app if it does not already exist
     if ! flyctl status --app "$postgres_app"; then
       # We need a 4x machine to do the fork
-      flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --fork-from frdm-db-staging --vm-size shared-cpu-4x --volume-size 10 --initial-cluster-size 1 || true
+      flyctl postgres create --name "$postgres_app" --region "$region" --org "$org" --fork-from "$postgres_source_app" --vm-size shared-cpu-4x --volume-size 10 --initial-cluster-size 1 || true
 
       # Once it is created, we can scale back to a smaller machine
       machine_id=$(fly machine ls -a "$postgres_app" -j | jq -r '.[0].id')
